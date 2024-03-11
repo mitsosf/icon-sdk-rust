@@ -1,7 +1,8 @@
 use std::str::FromStr;
 use rust_decimal::Decimal;
-use icon_sdk_rust::icon_service;
-use icon_sdk_rust::utils::helpers::hex_to_icx;
+use icon_sdk::icon_service;
+use icon_sdk::utils::helpers;
+use icon_sdk::wallet::Wallet;
 
 #[tokio::test]
 async fn test_get_last_block() -> Result<(), ()> {
@@ -64,7 +65,7 @@ async fn test_get_balance() -> Result<(), ()> {
 }
 #[tokio::test]
 async fn test_hex_to_icx() -> Result<(), ()> {
-    let res = icon_sdk_rust::utils::helpers::hex_to_icx("0x63b5429420c741b16a10f");
+    let res = helpers::hex_to_icx("0x63b5429420c741b16a10f");
     match res {
         Some(response) => {
             assert_eq!(response.to_string(), "7533727.039631672546337039");
@@ -77,10 +78,10 @@ async fn test_hex_to_icx() -> Result<(), ()> {
 
 #[tokio::test]
 async fn test_icx_to_hex() -> Result<(), ()> {
-    let res = icon_sdk_rust::utils::helpers::icx_to_hex(Decimal::from_str("7533727.039631672546337039").unwrap());
+    let res = helpers::icx_to_hex(Decimal::from_str("7533727.039631672546337039").unwrap());
     match res {
         Some(response) => {
-            assert_eq!(response, "0x63d8bac040145a956a22a");
+            assert_eq!(response, "0x63b5429420c741b16a10f");
             println!("{:?}", response);
         },
         None => println!("Error"),
@@ -90,25 +91,35 @@ async fn test_icx_to_hex() -> Result<(), ()> {
 }
 
 #[tokio::test]
-async fn test_serialize_transaction() -> Result<(), ()> {
+async fn test_send_transaction() -> Result<(), ()> {
+    let wallet = Wallet::new(Some("f4ade1ff528c9e0bf10d35909e3486ef6ce88df8a183fc1cc2c65bfa9a53d3fd".to_string()));
     let res = icon_service::send_transaction(
-        "hx8dc6ae3d93e60a2dddf80bfc5fb1cd16a2bf6160",
-        "hxf8689d6c4c8f333651469fdea2ac59a18f6c242d",
-        "0x2386f26fc10000",
+        wallet,
+        "hxb14e0c751899676a1a4e655a34063b42260f844b",
+        "hxf8689d6c4c8f333651469fdea2ac59a18f6c2421",
+        "1.31231232",
+        "0x3",
         "0x2",
-        "0x1",
         "0x1",
         "0x186a0"
     ).await;
 
     match res {
         Ok(response) => {
-            assert_eq!(response, "308167c8113b6e6f3f9e7ba28f495af468ed636a72e411d99823a78c61d104b3")
-            // assert_eq!(response["jsonrpc"], "2.0");
-            // assert!(!response.as_object().unwrap().contains_key("error"));
+            println!("{:?}", response);
+            assert_eq!(response["jsonrpc"], "2.0");
+            assert!(!response.as_object().unwrap().contains_key("error"));
         },
         Err(e) => println!("Error: {:?}", e),
     }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_wallet() -> Result<(), ()> {
+    let wallet = Wallet::new(Some("f4ade1ff528c9e0bf10d35909e3486ef6ce88df8a183fc1cc2c65bfa9a53d3fd".to_string()));
+    assert_eq!(wallet.get_public_address(), "hxb14e0c751899676a1a4e655a34063b42260f844b");
 
     Ok(())
 }
