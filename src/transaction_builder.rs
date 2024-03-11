@@ -1,6 +1,8 @@
 use reqwest::{Client, Error};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value, Map};
+use sha3::{Digest, Sha3_256};
+use std::collections::BTreeMap;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct TransactionBuilder {
@@ -66,6 +68,111 @@ impl TransactionBuilder {
         params.insert("address".to_string(), json!(address));
 
         self.set_params(&params)
+    }
+
+    pub fn from(self, from: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("from".to_string(), json!(from));
+
+        self.set_params(&params)
+    }
+
+    pub fn to(self, to: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("to".to_string(), json!(to));
+
+        self.set_params(&params)
+    }
+
+    pub fn value(self, value: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("value".to_string(), json!(value));
+
+        self.set_params(&params)
+    }
+
+    pub fn version(self, version: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("version".to_string(), json!(version));
+
+        self.set_params(&params)
+    }
+
+    pub fn nid(self, nid: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("nid".to_string(), json!(nid));
+
+        self.set_params(&params)
+    }
+
+    pub fn nonce(self, nonce: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("nonce".to_string(), json!(nonce));
+
+        self.set_params(&params)
+    }
+
+    pub fn step_limit(self, step_limit: &str) -> Self {
+        let mut params = Map::new();
+        params.insert("stepLimit".to_string(), json!(step_limit));
+
+        self.set_params(&params)
+    }
+
+    pub fn serialize(&self, hashed: bool) -> String {
+        let result_str = Self::value_traverse(&self.data["params"]);
+        let result_string_replaced = &result_str[1..result_str.len() - 1];
+        let result = format!("icx_sendTransaction.{}", result_string_replaced);
+
+        if hashed {
+            format!("{}", hex::encode(sha3::Sha3_256::digest(result.as_bytes())))
+        } else {
+            result
+        }
+    }
+
+    fn value_traverse(value: &Value) -> String {
+        match value {
+            Value::Object(obj) => {
+                let mut result = "{".to_string();
+                let sorted: BTreeMap<_, _> = obj.iter().collect();
+                for (key, val) in &sorted {
+                    result.push_str(&format!("{}.", key));
+                    result.push_str(&Self::value_traverse(val));
+                    result.push('.');
+                }
+                if result.ends_with('.') {
+                    result.pop();
+                }
+                result.push('}');
+                result
+            },
+            Value::Array(arr) => {
+                let mut result = "[".to_string();
+                for val in arr {
+                    result.push_str(&Self::value_traverse(val));
+                    result.push('.');
+                }
+                if result.ends_with('.') {
+                    result.pop();
+                }
+                result.push(']');
+                result
+            },
+            Value::String(s) => Self::escape_string(s),
+            Value::Number(n) => n.to_string(),
+            Value::Bool(b) => b.to_string(),
+            Value::Null => "\\0".to_string(),
+        }
+    }
+
+    fn escape_string(value: &str) -> String {
+        value.replace("\\", "\\\\")
+            .replace(".", "\\.")
+            .replace("{", "\\{")
+            .replace("}", "\\}")
+            .replace("[", "\\[")
+            .replace("]", "\\]")
     }
 
     pub async fn send(self) -> Result<Value, Error> {

@@ -37,3 +37,20 @@ pub async fn get_balance(address: &str) -> Result<Value, Box<dyn Error>> {
 
     Ok(response)
 }
+
+pub async fn send_transaction(from: &str, to: &str, value: &str, version: &str, nid: &str, nonce: &str, step_limit: &str) -> Result<String, Box<dyn Error>> {
+    let transaction_builder = TransactionBuilder::new()
+        .method("icx_sendTransaction")
+        .from(from)
+        .to(to)
+        .value(value)
+        .version(version)
+        .nid(nid)
+        .nonce(nonce)
+        .step_limit(step_limit)
+        .serialize(true);
+    Ok(transaction_builder)
+    // let response: Value = transaction_builder.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+    //
+    // Ok(response)
+}

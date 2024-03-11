@@ -88,3 +88,27 @@ async fn test_icx_to_hex() -> Result<(), ()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_serialize_transaction() -> Result<(), ()> {
+    let res = icon_service::send_transaction(
+        "hx8dc6ae3d93e60a2dddf80bfc5fb1cd16a2bf6160",
+        "hxf8689d6c4c8f333651469fdea2ac59a18f6c242d",
+        "0x2386f26fc10000",
+        "0x2",
+        "0x1",
+        "0x1",
+        "0x186a0"
+    ).await;
+
+    match res {
+        Ok(response) => {
+            assert_eq!(response, "308167c8113b6e6f3f9e7ba28f495af468ed636a72e411d99823a78c61d104b3")
+            // assert_eq!(response["jsonrpc"], "2.0");
+            // assert!(!response.as_object().unwrap().contains_key("error"));
+        },
+        Err(e) => println!("Error: {:?}", e),
+    }
+
+    Ok(())
+}
