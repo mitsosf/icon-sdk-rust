@@ -1,59 +1,135 @@
 use std::error::Error;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value};
-use crate::transaction::Transaction;
+use crate::transaction_builder::TransactionBuilder;
 use crate::wallet::Wallet;
 
-pub async fn get_last_block() -> Result<Value, Box<dyn Error>> {
-    let transaction_builder = Transaction::new()
-        .method("icx_getLastBlock");
-
-    let response: Value = transaction_builder.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
-
-    Ok(response)
+#[derive(Default, Serialize, Deserialize)]
+pub struct IconService {
+    pub(crate) icon_service_url: String,
 }
 
-pub async fn get_block_by_height(block_height: &str) -> Result<Value, Box<dyn Error>> {
-    let transaction_builder = Transaction::new()
-        .method("icx_getBlockByHeight").block_height(block_height);
+impl IconService {
+    pub fn new(icon_service_url: Option<String>) -> Self {
+        Self {
+            icon_service_url: icon_service_url
+                .unwrap_or_else(|| "https://api.icon.community/api/v3".to_string())
+        }
+    }
 
-    let response: Value = transaction_builder.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+    pub async fn get_last_block(&self) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_getLastBlock")
+            .build();
 
-    Ok(response)
-}
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
 
-pub async fn get_block_by_hash(block_hash: &str) -> Result<Value, Box<dyn Error>> {
-    let transaction_builder = Transaction::new()
-        .method("icx_getBlockByHash").block_hash(block_hash);
+        Ok(response)
+    }
 
-    let response: Value = transaction_builder.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+    pub async fn get_block_by_height(&self, block_height: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_getBlockByHeight")
+            .block_height(block_height)
+            .build();
 
-    Ok(response)
-}
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
 
-pub async fn get_balance(address: &str) -> Result<Value, Box<dyn Error>> {
-    let transaction_builder = Transaction::new()
-        .method("icx_getBalance").address(address);
+        Ok(response)
+    }
 
-    let response: Value = transaction_builder.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+    pub async fn get_block_by_hash(&self, block_hash: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_getBlockByHash")
+            .block_hash(block_hash)
+            .build();
 
-    Ok(response)
-}
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
 
-pub async fn send_transaction(wallet: Wallet, from: &str, to: &str, value: &str, version: &str, nid: &str, nonce: &str, step_limit: &str) -> Result<Value, Box<dyn Error>> {
-    let transaction_builder = Transaction::new()
-        .icon_service_url("https://lisbon.net.solidwallet.io/api/v3")
-        .method("icx_sendTransaction")
-        .from(from)
-        .to(to)
-        .value(value)
-        .version(version)
-        .nid(nid)
-        .timestamp()
-        .nonce(nonce)
-        .step_limit(step_limit)
-        .sign(wallet.get_private_key().as_str());
+        Ok(response)
+    }
 
-    let response: Value = transaction_builder.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+    pub async fn get_balance(&self, address: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_getBalance")
+            .address(address)
+            .build();
 
-    Ok(response)
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+
+        Ok(response)
+    }
+
+    pub async fn get_transaction_result(&self, tx_hash: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_getTransactionResult")
+            .tx_hash(tx_hash)
+            .build();
+
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+
+        Ok(response)
+    }
+
+    pub async fn get_transaction_by_hash(&self, tx_hash: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_getTransactionByHash")
+            .tx_hash(tx_hash)
+            .build();
+
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+
+        Ok(response)
+    }
+
+    pub async fn call(&self, score: &str, params: Value) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_call")
+            .to(score)
+            .call(params)
+            .build();
+
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+
+        Ok(response)
+    }
+
+    pub async fn send_transaction(&self, wallet: Wallet, to: &str, value: &str, version: &str, nid: &str, nonce: &str, step_limit: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_sendTransaction")
+            .from(wallet.get_public_address().as_str())
+            .to(to)
+            .value(value)
+            .version(version)
+            .nid(nid)
+            .timestamp()
+            .nonce(nonce)
+            .step_limit(step_limit)
+            .sign(wallet.get_private_key().as_str())
+            .build();
+
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+
+        Ok(response)
+    }
+
+    pub async fn send_transaction_with_message(&self, wallet: Wallet, to: &str, value: &str, version: &str, nid: &str, nonce: &str, step_limit: &str, message: &str) -> Result<Value, Box<dyn Error>> {
+        let transaction = TransactionBuilder::new(self)
+            .method("icx_sendTransaction")
+            .from(wallet.get_public_address().as_str())
+            .to(to)
+            .value(value)
+            .version(version)
+            .nid(nid)
+            .timestamp()
+            .nonce(nonce)
+            .step_limit(step_limit)
+            .message(message)
+            .sign(wallet.get_private_key().as_str())
+            .build();
+
+        let response: Value = transaction.send().await.map_err(|e| Box::new(e) as Box<dyn Error>)?;
+
+        Ok(response)
+    }
 }
