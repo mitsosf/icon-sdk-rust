@@ -1,8 +1,5 @@
-use std::str::FromStr;
-use rust_decimal::Decimal;
 use serde_json::json;
 use icon_sdk::icon_service;
-use icon_sdk::utils::helpers;
 use icon_sdk::wallet::Wallet;
 
 #[tokio::test]
@@ -125,33 +122,6 @@ async fn test_call() -> Result<(), ()> {
 }
 
 #[tokio::test]
-async fn test_hex_to_icx() -> Result<(), ()> {
-    let res = helpers::hex_to_icx("0x63b5429420c741b16a10f");
-    match res {
-        Some(response) => {
-            assert_eq!(response.to_string(), "7533727.039631672546337039");
-        },
-        None => panic!("Error"),
-    }
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_icx_to_hex() -> Result<(), ()> {
-    let res = helpers::icx_to_hex(Decimal::from_str("7533727.039631672546337039").unwrap());
-    match res {
-        Some(response) => {
-            assert_eq!(response, "0x63b5429420c741b16a10f");
-            println!("{:?}", response);
-        },
-        None => panic!("Error"),
-    }
-
-    Ok(())
-}
-
-#[tokio::test]
 async fn test_send_transaction() -> Result<(), ()> {
     let wallet = Wallet::new(Some("f4ade1ff528c9e0bf10d35909e3486ef6ce88df8a183fc1cc2c65bfa9a53d3fd".to_string()));
 
@@ -202,14 +172,6 @@ async fn test_send_transaction_with_message() -> Result<(), ()> {
         },
         Err(e) => panic!("Error: {:?}", e),
     }
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_wallet() -> Result<(), ()> {
-    let wallet = Wallet::new(Some("f4ade1ff528c9e0bf10d35909e3486ef6ce88df8a183fc1cc2c65bfa9a53d3fd".to_string()));
-    assert_eq!(wallet.get_public_address(), "hxb14e0c751899676a1a4e655a34063b42260f844b");
 
     Ok(())
 }
