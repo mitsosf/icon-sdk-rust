@@ -18,7 +18,8 @@ Features
 
 - Wallet management
 - Read data from the blockchain
-- Send transactions
+- Send ICX transactions
+- Full IRC2 token support
 - Perform SCORE calls
 - Transaction builder
 
@@ -30,7 +31,7 @@ To use the SDK in your Rust project, add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-icon-sdk = "1.1.0"
+icon-sdk = "1.2.0"
 ```
 
 Testing
@@ -121,6 +122,3 @@ let icon_service = icon_service::IconService::new(Some("https://lisbon.net.solid
 ### Use the transaction builder
 See `icon_service.rs` to see how to use the transaction builder.
 
-Coming soon
---------
-- IRC2 token support
