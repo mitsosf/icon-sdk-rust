@@ -1,3 +1,3 @@
 pub mod helpers;
-pub mod responses;
-pub mod serializer;
+pub(crate) mod serializer;
+pub(crate) mod transaction_types;

@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use crate::icon_service::IconService;
 use crate::transaction_builder::TransactionBuilder;
 use crate::utils::helpers::icx_to_hex;
+use crate::utils::transaction_types::TransactionType;
 use crate::wallet::Wallet;
 
 #[derive(Default, Serialize, Deserialize)]
@@ -24,7 +25,7 @@ impl IRC2 {
 
     pub async fn name(&self) -> Result<Value, Box<dyn Error>> {
         let transaction = TransactionBuilder::new(&self.icon_service)
-            .method("icx_call")
+            .method(TransactionType::Call.as_str())
             .to(&self.contract_address)
             .call(
                 json!({
@@ -40,7 +41,7 @@ impl IRC2 {
 
     pub async fn symbol(&self) -> Result<Value, Box<dyn Error>> {
         let transaction = TransactionBuilder::new(&self.icon_service)
-            .method("icx_call")
+            .method(TransactionType::Call.as_str())
             .to(&self.contract_address)
             .call(
                 json!({
@@ -56,7 +57,7 @@ impl IRC2 {
 
     pub async fn decimals(&self) -> Result<Value, Box<dyn Error>> {
         let transaction = TransactionBuilder::new(&self.icon_service)
-            .method("icx_call")
+            .method(TransactionType::Call.as_str())
             .to(&self.contract_address)
             .call(
                 json!({
@@ -72,7 +73,7 @@ impl IRC2 {
 
     pub async fn total_supply(&self) -> Result<Value, Box<dyn Error>> {
         let transaction = TransactionBuilder::new(&self.icon_service)
-            .method("icx_call")
+            .method(TransactionType::Call.as_str())
             .to(&self.contract_address)
             .call(
                 json!({
@@ -88,7 +89,7 @@ impl IRC2 {
 
     pub async fn balance_of(&self, account: String) -> Result<Value, Box<dyn Error>> {
         let transaction = TransactionBuilder::new(&self.icon_service)
-            .method("icx_call")
+            .method(TransactionType::Call.as_str())
             .to(&self.contract_address)
             .call(
                 json!({
@@ -118,7 +119,7 @@ impl IRC2 {
         }
 
         let transaction = TransactionBuilder::new(&self.icon_service)
-            .method("icx_sendTransaction")
+            .method(TransactionType::SendTransaction.as_str())
             .from(wallet.get_public_address().as_str())
             .to(&self.contract_address)
             .version(version)
